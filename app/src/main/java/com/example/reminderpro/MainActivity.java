@@ -29,10 +29,11 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements TaskListAdapter.ResultListener {
     private ImageView addbutton;
-    private Button addTask;
+    private Button addTask,cancelOnAddTask;
     private EditText task;
     private RecyclerView tasks;
     private ArrayList<Tasks> listofTasks=new ArrayList<Tasks>();
+    private ArrayList<Tasks> helperListofTasks=new ArrayList<Tasks>();
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -45,6 +46,7 @@ public class MainActivity extends AppCompatActivity implements TaskListAdapter.R
                 AlertDialog.Builder dialogBuilder= new AlertDialog.Builder(MainActivity.this);
                 View dialogforTaskAdd = getLayoutInflater().inflate(R.layout.taskwriterlayout,null);
                 addTask= dialogforTaskAdd.findViewById(R.id.button);
+                cancelOnAddTask=dialogforTaskAdd.findViewById(R.id.cancelButton);
                 task=dialogforTaskAdd.findViewById(R.id.editTextTextPersonName);
                 dialogBuilder.setView(dialogforTaskAdd);
                 AlertDialog alertDialog= dialogBuilder.create();
@@ -55,11 +57,19 @@ public class MainActivity extends AppCompatActivity implements TaskListAdapter.R
                         Tasks newTask= new Tasks(task.getText().toString(),false);
                         listofTasks.add(newTask);
                         saveTaskData();
+                        alertDialog.dismiss();
+                    }
+                });
+                cancelOnAddTask.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        alertDialog.dismiss();
                     }
                 });
             }
         });
         //Check how this works by playing with it
+
         LinearLayoutManager layoutManager=new LinearLayoutManager(this);
         layoutManager.setOrientation(LinearLayoutManager.VERTICAL);
         tasks.setLayoutManager(layoutManager);
@@ -74,6 +84,42 @@ public class MainActivity extends AppCompatActivity implements TaskListAdapter.R
     public void onResultClick (final int positon){
         Integer s = positon;
 
+        AlertDialog.Builder dialogBuilder= new AlertDialog.Builder(MainActivity.this)
+                .setTitle("Task Done?")
+                .setMessage("Are you done with this task?")
+                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        loadTaskData();
+                        //listofTasks.remove(s);
+                        ArrayList<Tasks> helperListofTasks= (ArrayList<Tasks>) listofTasks.clone();
+                        Toast.makeText(MainActivity.this, "Hi " +listofTasks.size()+" "+helperListofTasks.size(), Toast.LENGTH_SHORT).show();
+                        listofTasks.clear();
+                        Toast.makeText(MainActivity.this, "Hi " +listofTasks.size()+" "+helperListofTasks.size(), Toast.LENGTH_SHORT).show();
+                        for(int i=0;i<helperListofTasks.size();i++){
+                            if(i==s)continue;
+                            listofTasks.add(helperListofTasks.get(i));
+                        }
+                        helperListofTasks.clear();
+                        /*Tasks doneTask=new Tasks(listofTasks.get(s).getActualTask(),true);
+                        listofTasks.set(s,doneTask);
+                        listofTasks.*/
+                        Toast.makeText(MainActivity.this, "Hi " +listofTasks.size(), Toast.LENGTH_SHORT).show();
+                        saveTaskData();
+                        LinearLayoutManager layoutManager=new LinearLayoutManager(MainActivity.this);
+                        layoutManager.setOrientation(LinearLayoutManager.VERTICAL);
+                        tasks.setLayoutManager(layoutManager);
+                        loadTaskData();
+
+                        TaskListAdapter adapter=new TaskListAdapter(MainActivity.this,listofTasks,MainActivity.this);
+                        tasks.setAdapter(adapter);
+                        adapter.notifyDataSetChanged();
+
+                    }
+                })
+                .setNegativeButton("Canel",null);
+        AlertDialog alertDialog= dialogBuilder.create();
+        alertDialog.show();
         //Intent intent = new Intent(this, ParentSearchResultProfileActivity.class);
         // startActivity(intent);
     }
